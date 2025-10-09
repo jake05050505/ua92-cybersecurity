@@ -180,7 +180,7 @@ app.post("/login", login_limiter, (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log(`Running in ${process.env.NODE_ENV} mode`);
-    if(devMode == false){console.log("Debugging enabled, see devMode variable to toggle (use \"npm run start\")");}
+    if(devMode == true){console.log("Debugging enabled, see devMode variable to toggle (use \"npm run start\")");}
 });
 
 db.connect((err) => {
