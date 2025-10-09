@@ -12,10 +12,11 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "devstart": "nodemon server.js",
-    "ds": "nodemon server.js"
+    "test":     "echo \"Error: no test specified\" && exit 1",
+    "start":    "cross-env NODE_ENV=production node server.js",
+    "devstart": "cross-env NODE_ENV=development nodemon server.js",
+    "dev":      "cross-env NODE_ENV=development nodemon server.js",
+    "ds":       "cross-env NODE_ENV=development nodemon server.js"
   },
   "keywords": [],
   "author": "",

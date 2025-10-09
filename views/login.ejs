@@ -16,7 +16,7 @@
 </head>
 
 <body>
-    <% if(env == "test"){ %>
+    <% if(devMode == true){ %>
         <%- include("partials/index.ejs") %>
         <%- include("partials/viewcount.ejs") %>
     <% } %>

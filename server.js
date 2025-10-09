@@ -3,28 +3,43 @@
 
 // #region configs
 // set environment type (test/prod)
-const env = "prod"; // "test" will render debug info such as partials/index, partials/viewcount, prod is purely semantic.
+devMode = process.env.NODE_ENV !== "production"; // "test" will render debug info such as partials/index, partials/viewcount, prod is purely semantic.
+// This should use NODE_ENV - added as of 09/10/2025 commit
 
-const express = require("express");
-const path = require("path");
-const session = require("express-session");
+const express   = require("express");
+const path      = require("path");
+const session   = require("express-session");
 const rateLimit = require("express-rate-limit");
-const bcrypt = require("bcrypt");
+const bcrypt    = require("bcrypt");
 
-const app = express();
+const app  = express();
 const PORT = 3000;
 
 // Limiter config - copied from https://www.npmjs.com/package/express-rate-limit, comments edited
 const signup_limiter = rateLimit({
     windowMs: 5 * 1000*60, // 5 mins
-	limit: 5, // user can make 5 signup attempts in 5 minute window
-    message: "Too many signup attempts, please try again later."
+	limit: 10, // user can make 10 signup attempts in 5 minute window
+
+    standardHeaders: true,
+    legacyHeaders: false,
+
+    handler: (req, res) => {
+        const rateLimitTime = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
+        res.status(429).send(`Too many signup attempts. Try again in ${rateLimitTime} seconds.`);
+    }
 });
 
 const login_limiter = rateLimit({
     windowMs: 15 * 1000*60, // 15 mins
-	limit: 5, // user can make 5 login attempts in 15 minute window
-    message: "Too many login attempts, please try again later.",
+	limit: 10, // user can make 10 login attempts in 15 minute window
+
+    standardHeaders: true,
+    legacyHeaders: false,
+
+    handler: (req, res) => {
+        const rateLimitTime = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
+        res.status(429).send(`Too many signup attempts. Try again in ${rateLimitTime} seconds.`);
+    }
 });
 
 // database credentials
@@ -57,19 +72,19 @@ app.use(session({
 // #region GET Routes
 app.get("/index", (req, res) => {
     req.session.username = (req.session.username || 0);
-    if(env=="test"){ return res.render("index", { env, viewcount: req.session.viewcount }); }
+    if(devMode == true){ return res.render("index", { devMode, viewcount: req.session.viewcount }); }
     else{ return res.redirect("/"); }
 });
 
 app.get("/signup", (req, res) => {
     req.session.viewcount = (req.session.viewcount || 0) + 1;
-    return res.render("signup", { env, viewcount: req.session.viewcount });
+    return res.render("signup", { devMode, viewcount: req.session.viewcount });
 });
 
-// helper function to ensure app.get("/") and app.get("/login") do the same thing
+// helper function to eliminate repetition in the GET routes below
 function render_login(req, res){
     req.session.viewcount = (req.session.viewcount || 0) + 1;
-    return res.render("login", { env, viewcount: req.session.viewcount });
+    return res.render("login", { devMode, viewcount: req.session.viewcount });
 }
 
 app.get('/', render_login);
@@ -81,7 +96,7 @@ app.get("/dashboard", (req, res) => {
     if(typeof username === "undefined"){
         return res.redirect("/login");
     }
-    return res.render("dashboard", { username, env, viewcount: req.session.viewcount });
+    return res.render("dashboard", { username, devMode, viewcount: req.session.viewcount });
 });
 
 app.get("/logout", (req, res) => {
@@ -96,13 +111,13 @@ app.post("/signup", signup_limiter, (req, res) => {
 
     // Backend validation
     if(!email || !username || !password){
-        return res.status(400).render("signup", { error: "Please fill all fields", env, viewcount: req.session.viewcount });
+        return res.status(400).render("signup", { error: "Please fill all fields", devMode, viewcount: req.session.viewcount });
     }
     if(email.length > 64 || username.length > 32 || password.length > 32){
-        return res.status(400).render("signup", { error: "Email/Username/Password too long, please try again", env, viewcount: req.session.viewcount }); // Should only be possible if the user edits the html to remove the maxlength attribute
+        return res.status(400).render("signup", { error: "Email/Username/Password too long, please try again", devMode, viewcount: req.session.viewcount }); // Should only be possible if the user edits the html to remove the maxlength attribute
     }
     if (!email.includes('@') || !email.includes('.')){
-        return res.status(400).render("signup", { error: "Email is not a valid format (user@example.com)", env, viewcount: req.session.viewcount });
+        return res.status(400).render("signup", { error: "Email is not a valid format (user@example.com)", devMode, viewcount: req.session.viewcount });
     }
 
     bcrypt.hash(password, 10, (err, hashed_password) => {
@@ -113,8 +128,8 @@ app.post("/signup", signup_limiter, (req, res) => {
         db.query(insertUserQuery, [email, username, hashed_password], (err) => {
             // tried to insert username/email which already exists
             if (err && err.code === "ER_DUP_ENTRY") {
-                return res.status(400).render("signup", { error: "A user with this username/email already exists", env, viewcount: req.session.viewcount });
-            } else if(err){throw err;}
+                return res.status(400).render("signup", { error: "A user with this username/email already exists", devMode, viewcount: req.session.viewcount });
+            } else if(err){ throw err; }
 
             req.session.username = username;
             return res.status(200).redirect(`/dashboard`);
@@ -128,18 +143,18 @@ app.post("/login", login_limiter, (req, res) => {
     const password = req.body.password;
 
     if(!username || !password){
-        return res.status(400).render("login", { error: "Please fill all fields", env, viewcount: req.session.viewcount });
+        return res.status(400).render("login", { error: "Please fill all fields", devMode, viewcount: req.session.viewcount });
     }
 
     const checkUserQuery = "select username, password from users where username = ?;";
 
     db.query(checkUserQuery, username, (err, result) => {
         if(err && err.code == "ER_PARSE_ERROR"){
-            return res.status(500).render("login", { error: "Internal Server Error", env, viewcount: req.session.viewcount });
+            return res.status(500).render("login", { error: "Internal Server Error", devMode, viewcount: req.session.viewcount });
         } else if(err){throw err;}
 
         if (result.length == 0){
-            return res.status(401).render("login", { error: "Invalid username or password", env, viewcount: req.session.viewcount });
+            return res.status(401).render("login", { error: "Invalid username or password", devMode, viewcount: req.session.viewcount });
         }
 
         username = result[0].username;
@@ -153,7 +168,7 @@ app.post("/login", login_limiter, (req, res) => {
                 return res.redirect("/dashboard");
             }
             else{
-                return res.status(401).render("login", { error: "Invalid username or password", env, viewcount: req.session.viewcount });
+                return res.status(401).render("login", { error: "Invalid username or password", devMode, viewcount: req.session.viewcount });
             }
         });
     });
@@ -164,7 +179,8 @@ app.post("/login", login_limiter, (req, res) => {
 // #region Connections
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    if(env=="test"){console.log("Debugging enabled, see env variable to toggle");}
+    console.log(`Running in ${process.env.NODE_ENV} mode`);
+    if(devMode == false){console.log("Debugging enabled, see devMode variable to toggle (use \"npm run start\")");}
 });
 
 db.connect((err) => {
