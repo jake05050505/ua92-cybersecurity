@@ -1,33 +1,43 @@
 import { Router } from "express";
-import "dotenv";
+import { rateLimit } from "express-rate-limit";
 import bcrypt from "bcrypt";
-import "express-session";
 import { users } from "./db.js";
+import "dotenv";
+const authRateLimit = rateLimit({
+    windowMs: 10 * 1000 * 60,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+        const rateLimitTimer = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
+        res.send(`Too many login attempts. Try again in ${rateLimitTimer} seconds.`);
+    }
+});
 const { NODE_ENV } = process.env;
 if (!NODE_ENV)
     throw new Error("NODE_ENV is missing!\nCheck your package.json scripts and make sure that `cross-env NODE_ENV={value}` is set. (NODE_ENV=\"production\" for production environments)");
-const DEV_MODE = process.env.NODE_ENV !== 'production';
+const DEV_MODE = process.env.NODE_ENV !== "production";
 export const router = Router();
 function meta(req) {
-    function incrementViewCount() {
-        if (!req.session.viewCount)
-            req.session.viewCount = 0;
-        return ++req.session.viewCount;
-    }
-    return { DEV_MODE, viewCount: incrementViewCount() };
+    if (!req.session.viewCount)
+        req.session.viewCount = 0;
+    ++req.session.viewCount;
+    return { DEV_MODE, viewCount: req.session.viewCount };
 }
-function IsUserAuthenticated(req) {
+function isUserAuthenticated(req) {
     return typeof req.session.username !== "undefined";
 }
-;
+// login/dashboard route
 router.route("/")
     .get((req, res) => {
-    if (IsUserAuthenticated(req))
-        return res.render("dashboard", { username: req.session.username, ...meta(req) });
+    if (isUserAuthenticated(req)) {
+        const { username, role } = req.session;
+        return res.render("dashboard", { username, role, ...meta(req) });
+    }
     else
         return res.render("login", meta(req));
 })
-    .post(async (req, res) => {
+    .post(authRateLimit, async (req, res) => {
     const { username, password } = req.body;
     const storedUser = await users.findOne({ username: username });
     if (storedUser === null)
@@ -40,6 +50,7 @@ router.route("/")
             return res.render("login", { err: "Invalid Username or Password.", ...meta(req) });
         else {
             req.session.username = storedUser.username;
+            req.session.role = storedUser.role;
             meta(req);
             return res.redirect("/");
         }
@@ -47,11 +58,11 @@ router.route("/")
 });
 router.route("/signup")
     .get((req, res) => {
-    if (IsUserAuthenticated(req))
+    if (isUserAuthenticated(req))
         return res.redirect("/");
     return res.render("signup", meta(req));
 })
-    .post(async (req, res) => {
+    .post(authRateLimit, async (req, res) => {
     const { email, username, password } = req.body;
     const userExists = await users.countDocuments({
         $or: [{ username: username }, { email: email }]
@@ -61,9 +72,11 @@ router.route("/signup")
     await users.insertOne({
         email: email,
         username: username,
-        password: await bcrypt.hash(password, 10)
+        password: await bcrypt.hash(password, 10),
+        role: "user"
     }).then(() => {
         req.session.username = username;
+        req.session.role = "user";
         meta(req);
         return res.redirect("/");
     });

@@ -2,7 +2,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import express from "express";
 import session from "express-session";
-import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import { router } from "./router.ts";
 import config from "../config.json" with { type: "json" };
