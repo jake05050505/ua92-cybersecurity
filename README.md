@@ -1,1 +1,3 @@
-TODO: add express-rate-limit to migrated back-end
+TODO:
+    Add admin user deletion & edit page
+    Migrate front-end to react
