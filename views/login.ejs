@@ -14,12 +14,12 @@
             <%- include("partials/viewcount.ejs") %>
         <% } %>
 
+        <% if (typeof err !=="undefined" ) { %>
+            <p class="error">
+                <%= err %>
+            </p>
+        <% } %>
         <main>
-            <% if (typeof err !=="undefined" ) { %>
-                <p class="error">
-                    <%= err %>
-                </p>
-            <% } %>
 
             <form name="login" action="/" method="POST">
             <label for="username">Username:</label><br>

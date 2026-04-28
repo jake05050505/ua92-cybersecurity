@@ -20,7 +20,8 @@ form {
     /* styling */
     padding: 1em;
     background-color: rgb(106, 104, 241);
-    border-radius: 0.7em;
+    border-radius: 1em;
+    corner-shape: squircle;
 }
 
 button,
