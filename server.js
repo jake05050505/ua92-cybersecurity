@@ -1,21 +1,20 @@
-// This file is built using Tim Edwards' notion documents as a guide --found at:
-// (https://dull-ceres-c2a.notion.site/Cyber-Security-Risk-Extra-Material-1aa408bc87ac80c5a62be0bc3ee23023)
-
 // #region configs
 // set environment type (test/prod)
-devMode = process.env.NODE_ENV !== "production"; // "test" will render debug info such as partials/index, partials/viewcount, prod is purely semantic.
-// This should use NODE_ENV - added as of 09/10/2025 commit
+DEV_MODE = process.env.NODE_ENV !== "production"; // This should use NODE_ENV - fixed in commit a87dadb
 
 const express   = require("express");
 const path      = require("path");
 const session   = require("express-session");
 const rateLimit = require("express-rate-limit");
 const bcrypt    = require("bcrypt");
+const mysql     = require("mysql2");
 
 const app = express();
 const PORT = 3000;
 
-// Limiter config - copied from https://www.npmjs.com/package/express-rate-limit, comments edited
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
 const signup_limiter = rateLimit({
     windowMs: 15 * 1000 * 60, // 15 mins
     limit: 10, // 10 signup attempts
@@ -42,17 +41,12 @@ const login_limiter = rateLimit({
     }
 });
 
-// database credentials
-const mysql = require("mysql2");
 const db = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "password", // in a production environment (not localhost) this should be a strong password to prevent brute force attacks. This will remain unsafe, including in the secure branch (should be origin/master).
     database: "secure"
 });
-
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -66,7 +60,6 @@ app.use(session({
         secure: false
     }
 }));
-// app.use(limiter);
 // #endregion
 
 // #region GET Routes
@@ -81,7 +74,6 @@ app.get("/signup", (req, res) => {
     return res.render("signup", { devMode, viewcount: req.session.viewcount });
 });
 
-// helper function to eliminate repetition in the GET routes below
 function render_login(req, res) {
     req.session.viewcount = (req.session.viewcount || 0) + 1;
     return res.render("login", { devMode, viewcount: req.session.viewcount });
@@ -100,7 +92,7 @@ app.get("/dashboard", (req, res) => {
 });
 
 app.get("/logout", (req, res) => {
-    delete req.session.username;
+    delete req.session.username; // potentially unsafe - only deletes username and not password
     res.redirect("/login");
 });
 // #endregion
@@ -179,8 +171,8 @@ app.post("/login", login_limiter, (req, res) => {
 // #region Connections
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Running in ${process.env.NODE_ENV} mode`);
-    if (devMode == true) { console.log("Debugging enabled, see devMode variable to toggle (use \"npm run start\")."); }
+    console.log(`Running in ${"Production" ? !DEV_MODE : "Development" } mode`);
+    if (devMode == true) console.log("Debugging enabled");
 });
 
 db.connect((err) => {

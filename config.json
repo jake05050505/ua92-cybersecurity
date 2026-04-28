@@ -1,0 +1,10 @@
+{
+    "Server": {
+        "hostname": "localhost",
+        "port": 3000
+    },
+    "Database": {
+        "hostname": "localhost",
+        "port": 27017
+    }
+}

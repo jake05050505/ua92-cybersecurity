@@ -1,42 +1,40 @@
-<!-- Display an error if it exists -->
-<% if (typeof error !=='undefined' ) { %>
-    <p class="error">
-        <%= error %>
-    </p>
-<% } %>
+<!DOCTYPE html>
+<html lang="en">
 
-    <!DOCTYPE html>
-    <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="/common.css">
+    <link rel="stylesheet" href="/forms.css">
+</head>
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Sign Up</title>
-        <link rel="stylesheet" href="/common.css">
-        <link rel="stylesheet" href="/forms.css">
-    </head>
+<body>
+    <% if (typeof err !== "undefined") { %>
+        <p class="error">
+            <%= err %>
+        </p>
+    <% } %>
+    <% if (DEV_MODE) { %>
+        <%- include("partials/index.ejs") %>
+        <%- include("partials/viewcount.ejs") %>
+    <% } %>
 
-    <body>
-        <% if(devMode == true){ %>
-            <%- include("partials/index.ejs") %>
-            <%- include("partials/viewcount.ejs") %>
-        <% } %>
+    <main>
+        <form name="signup" action="/signup" method="POST">
+            <label for="email">Email:</label><br>
+            <input type="email" name="email" id="email" placeholder="Email" required autocomplete="email" maxlength="64"><br>
 
-        <main>
-            <form name="signup" action="/signup" method="POST">
-                <label for="email">Email:</label><br>
-                <input type="email" name="email" id="email" placeholder="Email" required autocomplete="email" maxlength="64"><br>
+            <label for="username">Username:</label><br>
+            <input type="text" name="username" id="username" placeholder="Username" required autocomplete="username" maxlength="32"><br>
 
-                <label for="username">Username:</label><br>
-                <input type="text" name="username" id="username" placeholder="Username" required autocomplete="username" maxlength="32"><br>
+            <label for="password">Password:</label><br>
+            <input type="password" name="password" id="password" placeholder="Password" required autocomplete="current-password" maxlength="32"><br>
 
-                <label for="password">Password:</label><br>
-                <input type="password" name="password" id="password" placeholder="Password" required autocomplete="current-password" maxlength="32"><br>
+            <button type="submit" class="align-center">Create Account</button>
+            <p> or <a href="/login">go to Login</a></p>
+        </form>
+    </main>
+</body>
 
-                <button type="submit" class="align-center">Create Account</button>
-                <p> or <a href="/login">go to Login</a></p>
-            </form>
-        </main>
-    </body>
-
-    </html>
+</html>
