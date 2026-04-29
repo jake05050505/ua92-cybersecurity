@@ -4,9 +4,10 @@ import "express-serve-static-core";
 // #region router.ts
 declare module "express-session" {
     interface SessionData {
-        viewCount: number;
-        username: string;
-        role: string;
+        viewCount?: number;
+        username?: string;
+        role?: string;
+        err?: string;
     }
 }
 

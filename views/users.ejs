@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Users</title>
+    <link rel="stylesheet" href="common.css">
+</head>
+<% if(DEV_MODE == true){ %>
+    <body style="display: block;">
+        <%- include("partials/index.ejs") %>
+        <%- include("partials/viewcount.ejs") %>
+    <% } %>
+
+    <main style="margin: 1em 2em;">
+        <h1>Users</h1>
+        <table style="border: 1px red; text-align: left;">
+            <tr>
+                <th>Email</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Password</th>
+                <th>ObjectId</th>
+            </tr>
+            <%= users %>
+            <% for (user of users) { %>
+            <tr>
+                <td><%= user.email %></td>
+                <td><%= user.username %></td>
+                <td><%= user.role %></td>
+                <td><form action="/users" method="post"><button type="submit">reset password</button></form></td>
+                <td><%= user._id %></td>
+                <td>
+                    <form action="/users" method="DELETE"><button type="submit">delete</button></form>
+                </td>
+            </tr>
+            <% } %>
+        </table>
+    </main>
+</body>
+
+</html>

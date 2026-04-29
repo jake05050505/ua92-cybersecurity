@@ -34,6 +34,10 @@ function isUserAuthenticated(req: Request): boolean {
     return typeof req.session.username !== "undefined";
 }
 
+function isAdmin(req: Request): boolean {
+    return req.session.role == "admin";
+}
+
 // login/dashboard route
 router.route("/")
     .get((req: Request, res: Response) => {
@@ -52,7 +56,9 @@ router.route("/")
         const storedHash = storedUser.password;
         bcrypt.compare(password, storedHash, (err, result) => {
             if (err) throw err;
-            if (!result) return res.render("login", { err: "Invalid Username or Password.", ...meta(req) });
+            if (!result) {
+                return res.render("login", { err: "Invalid Username or Password.", ...meta(req) });
+            }
             else {
                 req.session.username = storedUser.username;
                 req.session.role = storedUser.role;
@@ -75,7 +81,7 @@ router.route("/signup")
             $or: [{username: username}, {email: email}]
         }) !== 0;
 
-        if (userExists) return res.render("signup", { err: "A user already exists with this email or username.", ...meta(req)});
+        if (userExists) return res.render("signup", { err: "A user already exists with this email or username.", ...meta(req) });
         await users.insertOne({
             email: email,
             username: username,
@@ -91,9 +97,23 @@ router.route("/signup")
     });
 
 router.route("/logout")
-    .get((req, res) => {
+    .get((req: Request, res: Response) => {
         req.session.destroy(err => {
             if (err) throw err;
             return res.redirect("/");
         });
     });
+
+router.route("/users")
+    .get(async (req: Request, res: Response) => {
+        if (req.session.role != "admin") return res.redirect("/");
+        return res.render("users", { users: await users.find({}).toArray(), ...meta(req) });
+    })
+    .post(async (req: Request, res: Response) => {
+        if (!isAdmin(req)) return res.redirect("/");
+
+    })
+    .delete(async (req: Request, res: Response) => {
+        if (!isAdmin(req)) return res.redirect("/");
+        
+    })

@@ -15,9 +15,12 @@
 
     <main style="margin: 1em 2em;">
         <h1>Dashboard</h1>
-        <% if (typeof(username) !== 'undefined'){ %>
+        <% if (typeof(username) !== "undefined"){ %>
             <p>Logged in as: </p><p class="underline"><%= username %></p>
             <p><a href="/logout">Log Out</a></p>
+            <% if (role == "admin"){ %>
+                <p><a href="/users">Users</a></p>
+            <% } %>
         <% } else { %>
             <p>Not logged in.</p>
         <% } %>
