@@ -6,9 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "cross-env NODE_ENV=production node ./dist/server.js",
-    "dev": "cross-env NODE_ENV=development nodemon ./dist/server.js",
-    "ds": "cross-env NODE_ENV=development nodemon ./dist/server.js"
+    "start": "cross-env NODE_ENV=production node ./dist/app.js",
+    "dev": "cross-env NODE_ENV=development nodemon ./dist/app.js",
+    "ds": "cross-env NODE_ENV=development nodemon ./dist/app.js"
   },
   "repository": {
     "type": "git",

@@ -10,7 +10,7 @@ const authRateLimit = rateLimit({
     legacyHeaders: false,
     handler: (req, res) => {
         const rateLimitTimer = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
-        res.send(`Too many login attempts. Try again in ${rateLimitTimer} seconds.`);
+        res.send(`Too many signup/login attempts. Try again in ${rateLimitTimer} seconds.`);
     }
 });
 const { NODE_ENV } = process.env;

@@ -5,14 +5,6 @@ import { type WithId } from "mongodb";
 import { users, type User }  from "./db.ts";
 import "dotenv";
 
-declare module "express-session" {
-    interface SessionData {
-        viewCount: number;
-        username: string;
-        role: string;
-    }
-}
-
 const authRateLimit = rateLimit({
     windowMs: 10 * 1000 * 60,
     limit: 10,
@@ -22,7 +14,7 @@ const authRateLimit = rateLimit({
 
     handler: (req, res) => {
         const rateLimitTimer = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
-        res.send(`Too many login attempts. Try again in ${rateLimitTimer} seconds.`);
+        res.send(`Too many signup/login attempts. Try again in ${rateLimitTimer} seconds.`);
     }
 });
 
